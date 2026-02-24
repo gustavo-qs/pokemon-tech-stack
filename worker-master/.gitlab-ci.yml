@@ -1,0 +1,21 @@
+# Enable corepack
+.configure-corepack:
+  before_script:
+    - corepack enable
+
+variables:
+  IMAGE:
+  ENABLE_CANARY: 'false'
+  ENABLE_SEQUENTIAL_BUILD: 'true'
+  MS_SUBDOMAIN: https://ms-api.support
+  DEPLOY_PATH: '/'
+
+include:
+  - project: sdk12/devops/ci
+    ref: master
+    file: templates/nodejs/ms-api.gitlab-ci.yml
+
+.node-build:
+  image: docker.devops.somosdigital.io/build/node:22.11.0-14
+  before_script:
+    - !reference [.configure-corepack, before_script]

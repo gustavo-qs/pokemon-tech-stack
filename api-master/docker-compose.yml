@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  mongodb_support:
+    container_name: support-db
+    image: mongo
+    networks:
+      - local
+    restart: always
+    environment:
+      - .env
+    volumes:
+      - $PWD/data:/data/db
+    ports:
+      - ${APP_MONGO_PORT:-27017}:27017
+
+networks:
+  local:
+    driver: bridge

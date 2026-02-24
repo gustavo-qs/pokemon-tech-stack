@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package pokemon;
+
+service PokemonService {
+  rpc CreatePokemon (CreatePokemonRequest) returns (CreatePokemonResponse) {}
+  rpc UpdatePokemon (UpdatePokemonRequest) returns (Empty) {}
+  rpc GetPokemon (GetPokemonRequest) returns (PokemonResponse) {}
+  rpc ListPokemons (ListPokemonsRequest) returns (ListPokemonsResponse) {}
+}
+
+message CreatePokemonRequest {
+  string basicForm = 1;
+  string ability = 2;
+  optional int32 middleFormEvolutionLevel = 3;
+  optional string middleForm = 4;
+  optional int32 finalFormEvolutionLevel = 5;
+  optional string finalForm = 6;
+}
+
+message CreatePokemonResponse {
+  string id = 1;
+}
+
+message UpdatePokemonRequest {
+  string id = 1;
+  string basicForm = 2;
+  string ability = 3;
+  optional int32 middleFormEvolutionLevel = 4;
+  optional string middleForm = 5;
+  optional int32 finalFormEvolutionLevel = 6;
+  optional string finalForm = 7;
+}
+
+message GetPokemonRequest {
+  string id = 1;
+}
+
+message PokemonResponse {
+  string id = 1;
+  string name = 2;
+  int32 level = 3;
+  string basicForm = 4;
+  string ability = 5;
+  bool hasMoreEvolution = 6;
+  optional int32 middleFormEvolutionLevel = 7;
+  optional string middleForm = 8;
+  optional int32 finalFormEvolutionLevel = 9;
+  optional string finalForm = 10;
+}
+
+message ListPokemonsRequest {
+  repeated string abilities = 1;
+  optional bool hasMoreEvolution = 2;
+}
+
+message ListPokemonsResponse {
+  repeated PokemonResponse pokemons = 1;
+}
+
+message Empty {}
