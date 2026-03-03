@@ -1,6 +1,7 @@
 import { PokemonRepository } from '@/core/repositories/pokemon.repository';
 import { CreatePokemonDto } from '@/core/use-cases/dto/create-pokemon.dto';
 import { UpdatePokemonDto } from '@/core/use-cases/dto/update-pokemon.dto';
+import { UpdatePokemonLevelDto } from '@/core/use-cases/dto/update-pokemon-level.dto';
 import { PokemonResponseDto } from '@/core/use-cases/dto/get-pokemon.dto';
 import { ListPokemonsFiltersDto } from '@/core/use-cases/dto/list-pokemons.dto';
 import { Injectable } from '@nestjs/common';
@@ -34,6 +35,14 @@ export class GRPCPokemonRepository implements PokemonRepository {
       this.client
         .getService<PokemonGrpcService>('PokemonService')
         .updatePokemon(data),
+    );
+  }
+
+  updateLevel(data: UpdatePokemonLevelDto): Promise<void> {
+    return lastValueFrom(
+      this.client
+        .getService<PokemonGrpcService>('PokemonService')
+        .updatePokemonLevel(data),
     );
   }
 

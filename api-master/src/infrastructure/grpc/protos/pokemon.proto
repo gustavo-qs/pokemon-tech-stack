@@ -5,6 +5,8 @@ package pokemon;
 service PokemonService {
   rpc CreatePokemon (CreatePokemonRequest) returns (CreatePokemonResponse) {}
   rpc UpdatePokemon (UpdatePokemonRequest) returns (Empty) {}
+  rpc UpdatePokemonLevel (UpdateLevelRequest) returns (Empty) {}
+  rpc MarkNoMoreEvolution (MarkNoMoreEvolutionRequest) returns (Empty) {}
   rpc GetPokemon (GetPokemonRequest) returns (PokemonResponse) {}
   rpc ListPokemons (ListPokemonsRequest) returns (ListPokemonsResponse) {}
 }
@@ -56,6 +58,15 @@ message ListPokemonsRequest {
 
 message ListPokemonsResponse {
   repeated PokemonResponse pokemons = 1;
+}
+
+message UpdateLevelRequest {
+  string id = 1;
+  int32 level = 2;
+}
+
+message MarkNoMoreEvolutionRequest {
+  string id = 1;
 }
 
 message Empty {}

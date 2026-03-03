@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 
 import { CreatePokemonUseCase } from '@/core/use-cases/create-pokemon.use-case';
 import { UpdatePokemonUseCase } from '@/core/use-cases/update-pokemon.use-case';
+import { UpdatePokemonLevelUseCase } from '@/core/use-cases/update-pokemon-level.use-case';
 import { GetPokemonUseCase } from '@/core/use-cases/get-pokemon.use-case';
 import { ListPokemonsUseCase } from '@/core/use-cases/list-pokemons.use-case';
 
@@ -10,6 +11,7 @@ export class PokemonController {
   constructor(
     private readonly createUseCase: CreatePokemonUseCase,
     private readonly updateUseCase: UpdatePokemonUseCase,
+    private readonly updateLevelUseCase: UpdatePokemonLevelUseCase,
     private readonly getUseCase: GetPokemonUseCase,
     private readonly listUseCase: ListPokemonsUseCase,
   ) {}
@@ -22,6 +24,11 @@ export class PokemonController {
   @Put(':id')
   update(@Param('id') id: string, @Body() body) {
     return this.updateUseCase.execute({ ...body, id });
+  }
+
+  @Patch(':id/level')
+  updateLevel(@Param('id') id: string, @Body() body: { level: number }) {
+    return this.updateLevelUseCase.execute({ id, level: body.level });
   }
 
   @Get(':id')

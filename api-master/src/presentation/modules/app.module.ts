@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SayHelloUseCase } from '@/core/use-cases/say-hello.use-case';
 import { CreatePokemonUseCase } from '@/core/use-cases/create-pokemon.use-case';
 import { UpdatePokemonUseCase } from '@/core/use-cases/update-pokemon.use-case';
+import { UpdatePokemonLevelUseCase } from '@/core/use-cases/update-pokemon-level.use-case';
 import { GetPokemonUseCase } from '@/core/use-cases/get-pokemon.use-case';
 import { ListPokemonsUseCase } from '@/core/use-cases/list-pokemons.use-case';
 import { makeInjectable } from './helpers/make-injectable';
@@ -38,6 +39,7 @@ import { pinoConfig } from '../config';
     },
     makeInjectable(CreatePokemonUseCase, [PokemonRepository]),
     makeInjectable(UpdatePokemonUseCase, [PokemonRepository]),
+    makeInjectable(UpdatePokemonLevelUseCase, [PokemonRepository]),
     makeInjectable(GetPokemonUseCase, [PokemonRepository]),
     makeInjectable(ListPokemonsUseCase, [PokemonRepository]),
   ],
