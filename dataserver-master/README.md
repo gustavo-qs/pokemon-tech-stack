@@ -1,32 +1,60 @@
-# Dataserver
+# Dataserver — Pokémon Manager
 
-## Descrição
-
-Este é um boilerplate para criação de um dataserver desenvolvido em NestJS, utilizando Clean Code e comunicação via gRPC. Ele se conecta ao banco de dados MongoDB.
-
-## Protobufs
-
-O projeto define dois protobufs:
-
-- Health: fornece serviços de saúde da aplicação, incluindo um método Check para verificar o status de serviço e um método Watch para monitorar o status de serviço.
-- Greeter: fornece um serviço de exemplo que retorna uma mensagem de boas-vindas.
+Servidor gRPC responsável pela lógica de negócio e persistência do sistema de gerenciamento de Pokémons. Conecta-se ao MongoDB e ao SQS.
 
 ## Variáveis de Ambiente
 
-O projeto utiliza as seguintes variáveis de ambiente:
-
-```
-NEW_RELIC_APP_NAME: nome do aplicativo New Relic.
-NEW_RELIC_LICENSE_KEY: chave de licença do New Relic.
-SERVER_IP: endereço IP e porta do servidor (padrão: 0.0.0.0:50051).
+```env
+SERVER_IP=0.0.0.0:50051
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=pokemon
+AWS_REGION=us-east-1
+AWS_ENDPOINT_URL=http://localhost:4566
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+SQS_QUEUE_URL=http://localhost:4566/000000000000/pokemon-level-update
 ```
 
 ## Execução
 
-Para executar o projeto, certifique-se de ter rodado o comando `yarn install` e ter configurado as variáveis de ambiente. Em seguida, execute o comando:
-
 ```bash
+yarn install
 yarn start:dev
 ```
 
-O servidor estará disponível no endereço http://localhost:50051.
+Servidor gRPC disponível em `0.0.0.0:50051`.
+
+## Proto — PokemonService
+
+```protobuf
+service PokemonService {
+  rpc CreatePokemon       (CreatePokemonRequest)       returns (CreatePokemonResponse) {}
+  rpc UpdatePokemon       (UpdatePokemonRequest)       returns (Empty)                 {}
+  rpc UpdatePokemonLevel  (UpdateLevelRequest)         returns (Empty)                 {}
+  rpc GetPokemon          (GetPokemonRequest)          returns (PokemonResponse)       {}
+  rpc ListPokemons        (ListPokemonsRequest)        returns (ListPokemonsResponse)  {}
+  rpc MarkNoMoreEvolution (MarkNoMoreEvolutionRequest) returns (Empty)                 {}
+}
+```
+
+## Regras de negócio
+
+- Pokémon criado com `level = 1` por padrão
+- `UpdatePokemonLevel`: só permite **aumentar** o nível, máximo **100**
+- A cada atualização de nível publica mensagem na fila `pokemon-level-update`
+- `MarkNoMoreEvolution`: chamado pelo Worker quando o Pokémon atinge a forma final
+
+## Seed
+
+Popula o banco com 10 Pokémons de exemplo:
+
+```bash
+yarn seed
+```
+
+## Testes
+
+```bash
+yarn test        # executa os testes unitários
+yarn test:cov    # com relatório de cobertura
+```

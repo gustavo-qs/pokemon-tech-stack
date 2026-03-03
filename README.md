@@ -21,7 +21,7 @@ Client (HTTP)
                                             ▲
 ┌─────────────┐        gRPC                │
 │worker-master│ ───────────────────────────┘
-│  :3000      │
+│  :3001      │
 │  SQS ◄──── │◄──── pokemon-level-update queue
 └─────────────┘
 ```
@@ -30,7 +30,7 @@ Client (HTTP)
 |---------|-----------------|-------|
 | **api-master** | Gateway REST — recebe requisições HTTP e repassa via gRPC | 3000 |
 | **dataserver-master** | Lógica de negócio + persistência MongoDB via gRPC server | 50051 |
-| **worker-master** | Consumidor SQS — processa eventos de level update assíncronos | 3000 |
+| **worker-master** | Consumidor SQS — processa eventos de level update assíncronos | 3001 |
 
 > A API e o Worker **nunca** acessam o banco diretamente — apenas via Dataserver por gRPC.
 
@@ -47,9 +47,9 @@ Client (HTTP)
 | `ability` | String | Habilidade do Pokémon |
 | `hasMoreEvolution` | Boolean | `false` quando atingiu a forma final |
 | `middleForm` | String? | Nome da forma intermediária |
-| `middleFormEvolutionLevel` | Number? | Nível necessário para evoluir para a forma intermediária |
+| `middleFormEvolutionLevel` | Number? | Nível para evoluir para a forma intermediária |
 | `finalForm` | String? | Nome da forma final |
-| `finalFormEvolutionLevel` | Number? | Nível necessário para evoluir para a forma final |
+| `finalFormEvolutionLevel` | Number? | Nível para evoluir para a forma final |
 
 ### Regra de evolução (`name`)
 
@@ -90,6 +90,24 @@ POST /pokemon
 PUT /pokemon/:id
 ```
 **Body:** mesmos campos do create (sem `id`).
+
+**Response `200`:** vazio (sucesso).
+
+---
+
+### Atualizar Nível
+```
+PATCH /pokemon/:id/level
+```
+**Body:**
+```json
+{ "level": 32 }
+```
+
+**Regras de negócio:**
+- Nível só pode **aumentar** (rejeita valores menores ou iguais ao atual)
+- Máximo permitido: **100**
+- Dispara mensagem na fila `pokemon-level-update` para o Worker
 
 **Response `200`:** vazio (sucesso).
 
@@ -137,11 +155,25 @@ GET /pokemon?abilities=Overgrow&hasMoreEvolution=true
 
 ---
 
+## Fluxo assíncrono (Level Update)
+
+```
+PATCH /pokemon/:id/level
+  → api-master → gRPC UpdatePokemonLevel → dataserver
+    → valida nível, persiste no MongoDB
+    → publica { id, pokemonId, level } em pokemon-level-update (SQS)
+      → worker-master consome
+        → GetPokemon via gRPC → verifica se atingiu forma final
+        → se sim → MarkNoMoreEvolution via gRPC → hasMoreEvolution = false
+```
+
+---
+
 ## Configuração
 
 ### api-master (`.env`)
 ```env
-SUPPORT_DATASERVER_IP=0.0.0.0:50051
+SUPPORT_DATASERVER_IP=localhost:50051
 ```
 
 ### dataserver-master (`.env`)
@@ -149,14 +181,23 @@ SUPPORT_DATASERVER_IP=0.0.0.0:50051
 SERVER_IP=0.0.0.0:50051
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=pokemon
+AWS_REGION=us-east-1
+AWS_ENDPOINT_URL=http://localhost:4566
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+SQS_QUEUE_URL=http://localhost:4566/000000000000/pokemon-level-update
 ```
 
 ### worker-master (`.env`)
 ```env
-SUPPORT_DATASERVER_IP=0.0.0.0:50051
+PORT=3001
+DATASERVER_IP=localhost:50051
 PROCESS_MESSAGE_QUEUE_NAME=pokemon-level-update
-PROCESS_MESSAGE_QUEUE_URL=<sqs-url>
+PROCESS_MESSAGE_QUEUE_URL=http://localhost:4566/000000000000/pokemon-level-update
 AWS_REGION=us-east-1
+AWS_ENDPOINT_URL=http://localhost:4566
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
 ```
 
 ---
@@ -165,12 +206,12 @@ AWS_REGION=us-east-1
 
 ```protobuf
 service PokemonService {
-  rpc CreatePokemon       (CreatePokemonRequest)  returns (CreatePokemonResponse) {}
-  rpc UpdatePokemon       (UpdatePokemonRequest)  returns (Empty)                 {}
-  rpc GetPokemon          (GetPokemonRequest)     returns (PokemonResponse)       {}
-  rpc ListPokemons        (ListPokemonsRequest)   returns (ListPokemonsResponse)  {}
-  rpc UpdatePokemonLevel  (UpdateLevelRequest)    returns (Empty)                 {}
-  rpc MarkNoMoreEvolution (MarkNoMoreEvolutionRequest) returns (Empty)            {}
+  rpc CreatePokemon       (CreatePokemonRequest)       returns (CreatePokemonResponse) {}
+  rpc UpdatePokemon       (UpdatePokemonRequest)       returns (Empty)                 {}
+  rpc UpdatePokemonLevel  (UpdateLevelRequest)         returns (Empty)                 {}
+  rpc GetPokemon          (GetPokemonRequest)          returns (PokemonResponse)       {}
+  rpc ListPokemons        (ListPokemonsRequest)        returns (ListPokemonsResponse)  {}
+  rpc MarkNoMoreEvolution (MarkNoMoreEvolutionRequest) returns (Empty)                 {}
 }
 ```
 
@@ -192,9 +233,38 @@ src/
 
 ---
 
+## Testes
+
+Testes unitários disponíveis nos três serviços:
+
+```bash
+# Dataserver (lógica de negócio + entidade)
+cd dataserver-master && yarn test
+
+# API (delegação ao repositório gRPC)
+cd api-master && yarn test
+
+# Worker (processamento de mensagens SQS)
+cd worker-master && yarn test
+```
+
+---
+
+## Seed
+
+Popula o banco com 10 Pokémons de exemplo (requer MongoDB rodando):
+
+```bash
+cd dataserver-master && yarn seed
+```
+
+---
+
 ## Stack
 
 - **Framework:** NestJS
 - **Comunicação inter-serviços:** gRPC + Protocol Buffers
 - **Banco de dados:** MongoDB (Mongoose)
 - **Fila assíncrona:** Amazon SQS (`pokemon-level-update`)
+- **Testes:** Jest + @automock/jest
+- **Infra local:** LocalStack (SQS)
