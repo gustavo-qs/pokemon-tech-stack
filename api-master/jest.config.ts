@@ -36,6 +36,7 @@ const config: Config = {
     'src/core/**/*.(t|j)s',
     '!src/core/**/*.(repository|interface).(t|j)s',
     '!src/core/exceptions/**/*.(t|j)s',
+    '!src/core/use-cases/dto/**/*.(t|j)s',
   ],
   coverageThreshold: {
     global: {
