@@ -4,12 +4,12 @@ import { SqsModule } from '@ssut/nestjs-sqs';
 import * as useCases from '@/core/use-cases';
 
 import { ProcessMessageConsumer } from '../sqs/consumers/process-messages.consumer';
-import { ProducerModule } from './producer.module';
+import { PokemonGrpcModule } from '@/infrastructure/grpc/pokemon.grpc.module';
 import type { InjectableClassType } from './decorators/injectable-class.decorator';
 
 @Module({
   imports: [
-    ProducerModule,
+    PokemonGrpcModule,
     SqsModule.register({
       consumers: [
         {

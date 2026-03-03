@@ -2,16 +2,13 @@ import { Message } from '@aws-sdk/client-sqs';
 import { Injectable, Logger } from '@nestjs/common';
 import { SqsConsumerEventHandler, SqsMessageHandler } from '@ssut/nestjs-sqs';
 
-import type { Message as MessageEntity } from '@/core/entities/message';
-import { ProcessMessageUseCase } from '@/core/use-cases';
-
-import { MessageProcessedProducerService } from '../producers/message-processed.producer';
+import type { PokemonLevelUpdate } from '@/core/entities/pokemon-level-update';
+import { ProcessPokemonLevelUpdateUseCase } from '@/core/use-cases';
 
 @Injectable()
 export class ProcessMessageConsumer {
   constructor(
-    private readonly processMessageUseCase: ProcessMessageUseCase,
-    private readonly messageProcessedProducer: MessageProcessedProducerService,
+    private readonly processUseCase: ProcessPokemonLevelUpdateUseCase,
   ) {}
   private readonly logger = new Logger(ProcessMessageConsumer.name);
 
@@ -20,11 +17,9 @@ export class ProcessMessageConsumer {
     /** batch: */ false,
   )
   public async handleMessage(message: Message) {
-    const parsedMessage = <MessageEntity>JSON.parse(message.Body);
+    const parsedMessage = <PokemonLevelUpdate>JSON.parse(message.Body);
 
-    await this.processMessageUseCase.execute(parsedMessage);
-
-    await this.messageProcessedProducer.sendMessage(parsedMessage.id);
+    await this.processUseCase.execute(parsedMessage);
   }
 
   @SqsConsumerEventHandler(
@@ -32,8 +27,6 @@ export class ProcessMessageConsumer {
     /** eventName: */ 'processing_error',
   )
   public onProcessingError(error: Error, message: Message) {
-    // In case of error, decide whether to retry or not
-
     this.logger.error(`Error processing message: ${message.MessageId}`);
   }
 }
