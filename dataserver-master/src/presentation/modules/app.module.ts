@@ -6,9 +6,12 @@ import { PokemonGrpcController } from '@/presentation/grpc/controllers/pokemon.c
 import { SayHelloUseCase } from '@/core/use-cases/say-hello.use-case';
 import { CreatePokemonUseCase } from '@/core/use-cases/create-pokemon.use-case';
 import { UpdatePokemonUseCase } from '@/core/use-cases/update-pokemon.use-case';
+import { UpdateLevelUseCase } from '@/core/use-cases/update-level.use-case';
+import { MarkNoMoreEvolutionUseCase } from '@/core/use-cases/mark-no-more-evolution.use-case';
 import { GetPokemonUseCase } from '@/core/use-cases/get-pokemon.use-case';
 import { ListPokemonsUseCase } from '@/core/use-cases/list-pokemons.use-case';
 import { makeInjectable } from './helpers/make-injectable';
+import { SqsProducerService } from '@/infrastructure/messaging/sqs.producer';
 import { LoggerModule } from 'nestjs-pino';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoosePokemonRepository } from '@/infrastructure/orm/mongoose/pokemon.repository';
@@ -20,7 +23,7 @@ const isProduction = ['prod', 'production'].includes(NODE_ENV ?? '');
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.development'] }),
     LoggerModule.forRoot({
       pinoHttp: {
         name: 'DATASERVER BOILERPLATE',
@@ -57,6 +60,14 @@ const isProduction = ['prod', 'production'].includes(NODE_ENV ?? '');
       'IPokemonRepository',
     ]),
     makeInjectable('IListPokemonsUseCase', ListPokemonsUseCase, [
+      'IPokemonRepository',
+    ]),
+    SqsProducerService,
+    makeInjectable('IUpdateLevelUseCase', UpdateLevelUseCase, [
+      'IPokemonRepository',
+      SqsProducerService,
+    ]),
+    makeInjectable('IMarkNoMoreEvolutionUseCase', MarkNoMoreEvolutionUseCase, [
       'IPokemonRepository',
     ]),
   ],

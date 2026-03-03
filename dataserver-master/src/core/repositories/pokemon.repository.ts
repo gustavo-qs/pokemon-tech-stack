@@ -8,6 +8,8 @@ export type FindAllFilters = {
 export interface IPokemonRepository {
   create(pokemon: Pokemon): Promise<{ id: string }>;
   update(id: string, pokemon: Pokemon): Promise<void>;
+  updateLevel(id: string, level: number): Promise<void>;
+  markNoMoreEvolution(id: string): Promise<void>;
   findById(id: string): Promise<PokemonData>;
   findAll(filters: FindAllFilters): Promise<PokemonData[]>;
 }

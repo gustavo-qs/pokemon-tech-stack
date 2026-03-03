@@ -3,6 +3,8 @@ import { GrpcMethod } from '@nestjs/microservices';
 import { CreatePokemonRequest, CreatePokemonResponse, GetPokemonRequest, ListPokemonsRequest, ListPokemonsResponse, PokemonResponse, UpdatePokemonRequest } from './dtos/pokemon.dto';
 import { ICreatePokemonUseCase } from '@/core/use-cases/create-pokemon.use-case';
 import { IUpdatePokemonUseCase } from '@/core/use-cases/update-pokemon.use-case';
+import { IUpdateLevelUseCase } from '@/core/use-cases/update-level.use-case';
+import { IMarkNoMoreEvolutionUseCase } from '@/core/use-cases/mark-no-more-evolution.use-case';
 import { IGetPokemonUseCase } from '@/core/use-cases/get-pokemon.use-case';
 import { IListPokemonsUseCase } from '@/core/use-cases/list-pokemons.use-case';
 
@@ -13,6 +15,10 @@ export class PokemonGrpcController {
     private readonly createUseCase: ICreatePokemonUseCase,
     @Inject('IUpdatePokemonUseCase')
     private readonly updateUseCase: IUpdatePokemonUseCase,
+    @Inject('IUpdateLevelUseCase')
+    private readonly updateLevelUseCase: IUpdateLevelUseCase,
+    @Inject('IMarkNoMoreEvolutionUseCase')
+    private readonly markNoMoreEvolutionUseCase: IMarkNoMoreEvolutionUseCase,
     @Inject('IGetPokemonUseCase')
     private readonly getUseCase: IGetPokemonUseCase,
     @Inject('IListPokemonsUseCase')
@@ -27,6 +33,18 @@ export class PokemonGrpcController {
   @GrpcMethod('PokemonService', 'UpdatePokemon')
   async updatePokemon(data: UpdatePokemonRequest): Promise<{}> {
     await this.updateUseCase.execute(data);
+    return {};
+  }
+
+  @GrpcMethod('PokemonService', 'UpdatePokemonLevel')
+  async updatePokemonLevel(data: { id: string; level: number }): Promise<{}> {
+    await this.updateLevelUseCase.execute(data);
+    return {};
+  }
+
+  @GrpcMethod('PokemonService', 'MarkNoMoreEvolution')
+  async markNoMoreEvolution(data: { id: string }): Promise<{}> {
+    await this.markNoMoreEvolutionUseCase.execute(data);
     return {};
   }
 

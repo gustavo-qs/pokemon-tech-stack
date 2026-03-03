@@ -43,6 +43,18 @@ export class MongoosePokemonRepository implements IPokemonRepository {
     if (!result) throw new NotFoundException(`Pokemon with id ${id} not found.`);
   }
 
+  async updateLevel(id: string, level: number): Promise<void> {
+    const result = await this.model.findByIdAndUpdate(id, { level });
+    if (!result) throw new NotFoundException(`Pokemon with id ${id} not found.`);
+  }
+
+  async markNoMoreEvolution(id: string): Promise<void> {
+    const result = await this.model.findByIdAndUpdate(id, {
+      hasMoreEvolution: false,
+    });
+    if (!result) throw new NotFoundException(`Pokemon with id ${id} not found.`);
+  }
+
   async findById(id: string): Promise<PokemonData> {
     const doc = await this.model.findById(id);
 
